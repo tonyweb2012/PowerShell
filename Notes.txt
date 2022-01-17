@@ -1,0 +1,228 @@
+=== PowerShell ===
+
+--- by default
+
+PS H:\_DATA\_PowerShell> Get-ExecutionPolicy
+AllSigned
+PS H:\_DATA\_PowerShell> Get-ExecutionPolicy -List
+
+        Scope ExecutionPolicy
+        ----- ---------------
+MachinePolicy       AllSigned
+   UserPolicy       Undefined
+      Process       Undefined
+  CurrentUser    RemoteSigned
+ LocalMachine       AllSigned
+
+---- Issues
+
+File <file location and name> cannot be loaded because running scripts is disabled on this system. For more information, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.
+
++ CategoryInfo : SecurityError: (:) [], ParentContainsErrorRecordException
+
++FullyQualifiedErrorId : UnauthorizedAccess
+
+--
+How to Fix it
+There are a couple of options to fixing this and I’ve provided the commands under each of the options below:
+
+Allowing all scripts to run (not so secure)
+
+  Set-ExecutionPolicy RemoteSigned
+
+
+Allowing all scripts to run under the current user (more secure)
+
+  Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+ 
+Allowing this specific script file to run (the most secure)
+
+  Set-ExecutionPolicy ByPass -File <File Name>.ps1
+
+---
+
+=== 2021-12-08 ===
+
+PS O:\LUX-BJB\PTLE\20 - OPERATIONS\Anh-Tuan\_PowerShell> .\sendmail_2.ps1
+.\sendmail_2.ps1 : File O:\LUX-BJB\PTLE\20 - OPERATIONS\Anh-Tuan\_PowerShell\sendmail_2.ps1 cannot be loaded. The file
+O:\LUX-BJB\PTLE\20 - OPERATIONS\Anh-Tuan\_PowerShell\sendmail_2.ps1 is not digitally signed. You cannot run this
+script on the current system. For more information about running scripts and setting execution policy, see
+about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.
+At line:1 char:1
++ .\sendmail_2.ps1
++ ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : SecurityError: (:) [], PSSecurityException
+    + FullyQualifiedErrorId : UnauthorizedAccess
+PS O:\LUX-BJB\PTLE\20 - OPERATIONS\Anh-Tuan\_PowerShell> get-executionpolicy
+AllSigned
+PS O:\LUX-BJB\PTLE\20 - OPERATIONS\Anh-Tuan\_PowerShell> get-executionpolicy -List
+
+        Scope ExecutionPolicy
+        ----- ---------------
+MachinePolicy       AllSigned
+   UserPolicy       Undefined
+      Process       Undefined
+  CurrentUser    RemoteSigned
+ LocalMachine       AllSigned
+
+
+PS O:\LUX-BJB\PTLE\20 - OPERATIONS\Anh-Tuan\_PowerShell> Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+Execution Policy Change
+The execution policy helps protect you from scripts that you do not trust. Changing the execution policy might expose
+you to the security risks described in the about_Execution_Policies help topic at
+https:/go.microsoft.com/fwlink/?LinkID=135170. Do you want to change the execution policy?
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "N"): y
+PS O:\LUX-BJB\PTLE\20 - OPERATIONS\Anh-Tuan\_PowerShell> get-executionpolicy -List
+
+        Scope ExecutionPolicy
+        ----- ---------------
+MachinePolicy       Undefined
+   UserPolicy       Undefined
+      Process       Undefined
+  CurrentUser    RemoteSigned
+ LocalMachine       AllSigned
+
+
+### Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+PS O:\LUX-BJB\PTLE\20 - OPERATIONS\Anh-Tuan\_PowerShell> .\sendmail_2.ps1
+no attachment provided
+
+---
+
+
+
+
+
+=== useful commands ===
+
+# list process names starting with note : 
+> Get-Process note*
+
+# Using -WhatIf to prototype a command, to find out what would happen if you used Stop-Process to stop the process ID
+you obtained
+> Stop-Process -id xxxx -whatif
+
+# if prompt is required before the execution of the cmdlet:
+> Stop-Process -id xxxx -Confirm
+
+# list all the aliases (including the built-in aliases) with the cmdlet: 
+> Get-Alias
+
+# find the equivalence alias <> cmdlet:
+> Get-Alias -Definition Get-ChildItem
+
+> (Get-Command -Name gci).Definition
+
+# to see the correct way to write a command, take a look to the cmdlet Show-Command
+> Show-Command -Name Copy-Item
+
+# Best Practice: It is recommended to avoid Write-Host (unless your goal is to write to the host only).
+Here are few alternatives to Write-Host:
+  Verbose messages: Write-Verbose
+  Warning messages: Write-Warning
+  Error messages: Write-Error
+  Debug messages: Write-Debug
+
+# Best Practice: It is recommended to use CIM cmdlets, not WMI cmdlets.
+cf. https://powershell-guru.com/powershell-best-practice-4-use-cim-cmdlets-not-wmi-cmdlets/
+
+# Be sure to not pick up a noun already used by a native cmdlet, use the parameter -Noun to check.
+> Get-Command -Noun Service
+# If you think the noun you choose could conflict with a native cmdlet, you should use a prefix.
+For example, the ActiveDirectory module adds the prefix “AD” for cmdlets: Get-ADUser, Get-ADComputer, etc.
+
+# It is recommended to use approved verb for cmdlet, do not use unapproved verb.
+To get the list of approved verbs :  
+> Get-Verb | Sort-Object -Property Verb
+
+# To list the optional common parameters:
+> [System.Management.Automation.Cmdlet]::OptionalCommonParameters
+
+# To get the list of commands supporting the optional common parameters “WhatIf” or “Confirm”:
+# WhatIf
+> Get-Command -ParameterName WhatIf
+> Get-Command | Where-Object -FilterScript { $_.Parameters.Keys -Contains 'WhatIf'}
+
+# Confirm
+> Get-Command -ParameterName Confirm
+> Get-Command | Where-Object -FilterScript { $_.Parameters.Keys -Contains 'Confirm'}
+
+# avoid Out-Null when you need to suppress the output of some commands inside large loops (for, foreach, etc.) for example.
+  $array = New-Object -TypeName System.Collections.ArrayList
+   
+  # Out-Null (cmdlet)
+  $array.Add('A') | Out-Null
+   
+  # $null (redirected to $null)
+  $array.Add('B') > $null
+   
+  # [void] (cast to void) - RECOMMENDED
+  [void]$array.Add('C')
+   
+  # $null (assigned to $null) - RECOMMENDED
+  $null = $array.Add('D')
+# It is recommended to assign to $null or [void] casting for better performance.
+# When you want to suppress the output of a command (example: when adding items to a collection), using Out-Null is slow.
+
+# avoid the need to use the horizontal scrolling in scripts to keep longs commands more readable.
+  Send-MailMessage -From 'sender@domain.com' -To 'recipient01@domain.com' -Bcc 'recipient02@domain.com' -Subject 'Meeting' -Body 'Please find the attached file' -Attachments 'C:\plannings\meeting.xls' -DeliveryNotificationOption OnFailure, OnSuccess -SmtpServer smtp.domain.com -Credential $credentials
+
+# use splatting:
+  $parameters = @{ 
+      From        = 'sender@domain.com'
+      To          = 'recipient01@domain.com'
+      Bcc         = 'recipient02@domain.com'
+      Subject     = 'Meeting' 
+      Body        = 'Please find the attached file'
+      Attachments = 'C:\plannings\meeting.xls'
+      Dno         = 'OnFailure,OnSuccess'
+      Priority    = 'High'
+      SmtpServer  = 'smtp.domain.com'
+  } 
+   
+  Send-MailMessage @parameters
+
+# or with pipeline, new line with carriage-return right after a pipe:
+=> https://powershell-guru.com/powershell-best-practice-23-avoid-the-horizontal-scrolling-too-long-one-liners-commands/
+
+---
+
+=== 2022-01-14 ===
+
+Ref. https://stackoverflow.com/questions/40475853/how-to-find-location-path-of-current-script-in-powershell
+
+See "get-help about_Automatic_Variables".
+
+Read sections on:
+
+$MyInvocation
+$PSScriptRoot
+$PSCommandPath
+
+---
+
+Ref. https://ss64.com/ps/convertto-securestring.html
+
+Examples
+
+Create a secure string from plain text:
+  PS C:\> $my_secure_password = convertto-securestring "P@ssW0rD!" -asplaintext -force
+
+Create a secure string using the Read-Host cmdlet:
+  PS C:\> $my_secure_password = read-host "Enter your password : " -assecurestring
+
+Save an encrypted string to disc:
+  PS C:\> $my_encrypted_string = convertfrom-securestring $my_secure_password -key (1..16)
+  PS C:\> $my_encrypted_string > password.txt
+
+Read an encrypted string from disc and convert back to a secure string:
+  PS C:\> $my_secure_password = convertto-securestring (get-content password.txt) -key (1..16)
+
+$pw = Read-Host -Prompt 'Enter the string to encrypt' -AsSecurreString
+$pw
+
+$myPassword = $pw | ConvertFrom-SecureString
+$myPassword > password.txt
