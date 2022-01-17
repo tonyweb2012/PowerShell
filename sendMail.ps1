@@ -59,7 +59,8 @@ $SMTPServer = "smtpinzrh.juliusbaer.com"
 $SMTPPort = "25"
 $Username = "r10569"
 #$Password = ConvertTo-SecureString "clearTextPassword" -AsPlainText -Force
-$Password = ConvertTo-SecureString "$(Get-Content -Path \\homelux-bjb01.juliusbaer.com\home01$\u56685\_DATA\_PowerShell\emailing\SMTPCreds)" -AsPlainText -Force
+#$Password = ConvertTo-SecureString "$(Get-Content -Path $PSScriptRoot\\SMTPCreds)" -AsPlainText -Force
+$Password = ConvertTo-SecureString (Get-Content -Path $PSScriptRoot\my_Encrypted_password.txt) -key (1..16)
 $myCreds = New-Object System.Management.Automation.PSCredential ($Username , $Password)
 #endregion
 
